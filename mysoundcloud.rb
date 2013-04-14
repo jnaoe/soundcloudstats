@@ -1,4 +1,4 @@
-require 'soundcloud'
+require './lib/soundcloud'
 require './myconfig'
 
 #!/usr/bin/env ruby
