@@ -133,7 +133,19 @@ if __FILE__ == $0
 
   copyInnerFollowing = sd.innerFollowings.clone
 
+  count = copyInnerFollowing.length
+  iterator = 0
+  step = 5
+  current_step = 0
+
+
   copyInnerFollowing.each do |h|
+    percent = iterator * 100 / count
+    if(percent > current_step)
+      current_step += step
+      puts("#{current_step}%")
+    end
+    iterator += 1
     sd.putFollowings(sd.getFollowings(h[:id]))
   end
   sd.orderInners
