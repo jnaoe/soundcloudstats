@@ -1,4 +1,4 @@
-require './lib/soundcloud'
+require 'soundcloud'
 require './myconfig'
 
 #!/usr/bin/env ruby
@@ -77,7 +77,8 @@ class MySoundcloud
     @innerFollowings.sort_by! { |v| v[:counter] }
   end
 
-  def displayArray(hashs = @innerFollowings, order = false)
+  def displayArrayOld(hashs = @innerFollowings, order = false, style = {:column_length => "auto"})
+
     is_first = true
     hashs.each do |h|
       raw = ""
@@ -89,6 +90,42 @@ class MySoundcloud
       puts raw
       if(is_first)
         is_first = false
+        redo
+      end
+    end
+  end
+
+  def displayArray(hashs = @innerFollowings, order = false, style = {:column_length => "auto"})
+    lengths = {}
+    space_string = "                                                                              "
+    hashs[0].keys.each do |k|
+      if(style[:column_length] == "auto")
+        lengths[k.to_sym] = hashs.max_by{|hash| hash[k.to_sym].to_s.length}[k.to_sym].to_s.length
+        lengths[k.to_sym] = (lengths[k.to_sym] < k.to_s.length) ? k.to_s.length : lengths[k.to_sym]
+      else
+        lengths[k.to_sym] = style[:column_length]
+      end
+    end
+
+    is_first = true
+
+    hashs.each do |h|
+      raw = ""
+      h.keys.each do |k|
+        if(is_first)
+          n = lengths[k.to_sym] - k.to_s.length
+          raw += k.to_s+space_string[0..n]+" | "
+        else
+          n = lengths[k.to_sym] - h[k.to_sym].to_s.length
+          raw += h[k.to_sym].to_s+space_string[0..n]+" | "
+        end
+      end
+      puts raw
+      if(is_first)
+        delimitor = ""
+        is_first = false
+        (0..raw.length).each {delimitor += "-"  }
+        puts delimitor
         redo
       end
     end
@@ -122,8 +159,8 @@ def hash_to_s(hashs)
 end
 
 if __FILE__ == $0
-  puts MyConfig::DEFAULT[:client_secret]
   sd = MySoundcloud.new
+
   sd.getLogInfo
   sd.connect
   sd.getMe
@@ -143,7 +180,7 @@ if __FILE__ == $0
     percent = iterator * 100 / count
     if(percent > current_step)
       current_step += step
-      puts("#{current_step}%")
+      print("#{current_step}%... ")
     end
     iterator += 1
     sd.putFollowings(sd.getFollowings(h[:id]))
