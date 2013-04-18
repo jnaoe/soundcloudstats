@@ -1,30 +1,21 @@
 require 'soundcloud'
 require './myconfig'
+require './logger'
 
 #!/usr/bin/env ruby
 class MySoundcloud
   attr_accessor :client
-  attr_accessor :innerFollowings
+  attr_accessor :innerFollowings # list of followings
   attr_accessor :me
 	
-  # Create 
   def initialize()
-    log('DEBUG', 'info()')
+    Logger::log('DEBUG', 'info()')
     @innerFollowings = Array.new
   end
 
-  def getLogInfo()
-    log('DEBUG', 'getLofInfo()')
-    print "username : "
-    @username = STDIN.gets
-    @username.chop!
-    print "password : "
-    @password = STDIN.gets
-    @password.chop!
-  end
-
+  # Connection to soundcloud
   def connect()
-    log('DEBUG', 'connect()')
+    Logger::log('DEBUG', 'connect()')
     begin
       @client = Soundcloud.new({
         :client_id => MyConfig::DEFAULT[:client_id],
@@ -39,6 +30,29 @@ class MySoundcloud
     end
   end
 
+  def getLogInfo(username = nil, password = nil)
+    Logger::log('DEBUG', 'getLofInfo()')
+    if(username == nil)
+    
+      print "username : "
+      @username = STDIN.gets
+      @username.chop!
+    else
+      @username = username
+    end
+
+    if(password == nil)
+      print "password : "
+      @password = STDIN.gets
+      @password.chop!
+    else
+      @password = password
+    end
+  end
+
+  # Puts an array of following into @innerFollowing 
+  # Params:
+  # +followings+:: array of followings to put into @innerFollowings
   def putFollowings(followings)
     if(followings.respond_to?("each"))
       followings.each do |following|
@@ -47,33 +61,41 @@ class MySoundcloud
     end
   end
 
+  # Puts a following into @innerFollowings
+  # Params:
+  # +following+:: single following to add to @innerFollowings
   def putFollowing(following)
-  #   log('DEBUG', 'putFollowing()')
+  #   Logger::log('DEBUG', 'putFollowing()')
     index = @innerFollowings.find_index {|h| h[:id] == following.id}
     if(index != nil)
       @innerFollowings[index][:counter] += 1
-      # log("DEBUG", @innerFollowings[innerFollowing.id]['username']+"+1")
+      # Logger::log("DEBUG", @innerFollowings[innerFollowing.id]['username']+"+1")
     else
       @innerFollowings.push({:id=>following.id, :username => following.username, :counter => 1})
-      # log('DEBUG', "####"+hash_to_s(@innerFollowings))
-      # log('DEBUG', @innerFollowings[innerFollowing.id])
+      # Logger::log('DEBUG', "####"+hash_to_s(@innerFollowings))
+      # Logger::log('DEBUG', @innerFollowings[innerFollowing.id])
     end
   end
 
+  # Get the followings from a user
+  # Params:
+  # +user_id+:: Id of the user to get following from (default to the current user id)
   def getFollowings(user_id = @me.id)
-    # log('DEBUG', 'getFollowings()')
+    # Logger::log('DEBUG', 'getFollowings()')
     followings = @client.get("/users/#{user_id}/followings")
     putFollowings(followings)
   end
 
+  # Get information about the current user
   def getMe()
-    log('DEBUG', 'getMe()')
+    Logger::log('DEBUG', 'getMe()')
     @me = @client.get('/me')
     puts "Your id is #{@me.id}"
   end
 
+  # Order @innerFollowings by counter
   def orderInners()
-    log('DEBUG', 'orderInners()')
+    Logger::log('DEBUG', 'orderInners()')
     @innerFollowings.sort_by! { |v| v[:counter] }
   end
 
@@ -95,6 +117,7 @@ class MySoundcloud
     end
   end
 
+  # Display an array well outputing
   def displayArray(hashs = @innerFollowings, order = false, style = {:column_length => "auto"})
     lengths = {}
     space_string = "                                                                              "
@@ -132,22 +155,6 @@ class MySoundcloud
   end
 end
 
-
-
-	
-def log(level, message)
-  levels = {
-    "DEBUG" => 0, 
-    "INFO" => 1,
-    "WARNING" => 2,
-    "ERROR" => 3,
-    "FATAL" => 4
-  }
-  if(levels[level]>=levels[MyConfig::DEFAULT[:debug]].to_i)
-    puts message
-  end
-end
-
 def hash_to_s(hashs)
   output = ""
   if(hashs.respond_to?("each_key"))
@@ -160,14 +167,18 @@ end
 
 if __FILE__ == $0
   sd = MySoundcloud.new
-
-  sd.getLogInfo
+  username = (MyConfig::DEFAULT[:username] != nil) ? MyConfig::DEFAULT[:username] : nil
+  password = (MyConfig::DEFAULT[:password] != nil) ? MyConfig::DEFAULT[:password] : nil
+  sd.getLogInfo((ARGV[0] != nil) ? ARGV[0] : username, (ARGV[1] != nil) ? ARGV[1] : password)
   sd.connect
   sd.getMe
   puts sd.me
   puts "Welcome #{sd.me.username}, please be patient while we are getting information :D"
   sd.getFollowings
 
+  sd.displayArray(sd.innerFollowings)
+  abort('Test')
+ 
   copyInnerFollowing = sd.innerFollowings.clone
 
   count = copyInnerFollowing.length
