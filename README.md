@@ -15,4 +15,8 @@ Last step, you need to do a
 gem install soundcloud
 ```
 
-That it's you can run soundcloud.rb and follow steps. 
+That it's you can run soundcloud.rb and follow steps 
+Or launching 
+```ruby
+mysoundcloud.rb (login (password))
+```
