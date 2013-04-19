@@ -4,18 +4,20 @@ require './logger'
 
 #!/usr/bin/env ruby
 class MySoundcloud
-  attr_accessor :client
+  attr_accessor :client # object wich comunicate with sdk
   attr_accessor :innerFollowings # list of followings
-  attr_accessor :me
+  attr_accessor :me # current logged user
 	
   def initialize()
-    Logger::log('DEBUG', 'info()')
+    # to intialize log system
+    @logger = Logger.new({:level => MyConfig::DEFAULT[:debug_level]})
+    @logger.log(@logger.LEVELS[:debug], 'info()')
     @innerFollowings = Array.new
   end
 
   # Connection to soundcloud
   def connect()
-    Logger::log('DEBUG', 'connect()')
+    @logger.log('DEBUG', 'connect()')
     begin
       @client = Soundcloud.new({
         :client_id => MyConfig::DEFAULT[:client_id],
@@ -30,10 +32,10 @@ class MySoundcloud
     end
   end
 
+  # Get information to loggin the user to soundcloud if needed
   def getLogInfo(username = nil, password = nil)
-    Logger::log('DEBUG', 'getLofInfo()')
-    if(username == nil)
-    
+    @logger.log(@logger.LEVELS[:debug], 'getLofInfo()')
+    if(username == nil) # if the username is neither from the config or the consol
       print "username : "
       @username = STDIN.gets
       @username.chop!
@@ -41,7 +43,7 @@ class MySoundcloud
       @username = username
     end
 
-    if(password == nil)
+    if(password == nil) # if the password is neither from the config or the consol
       print "password : "
       @password = STDIN.gets
       @password.chop!
@@ -88,14 +90,14 @@ class MySoundcloud
 
   # Get information about the current user
   def getMe()
-    Logger::log('DEBUG', 'getMe()')
+    @logger.log('DEBUG', 'getMe()')
     @me = @client.get('/me')
     puts "Your id is #{@me.id}"
   end
 
   # Order @innerFollowings by counter
   def orderInners()
-    Logger::log('DEBUG', 'orderInners()')
+    @logger.log(@logger.LEVELS[:debug], 'orderInners()')
     @innerFollowings.sort_by! { |v| v[:counter] }
   end
 
